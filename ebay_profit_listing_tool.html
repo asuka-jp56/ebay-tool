@@ -1,0 +1,441 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.app{padding:1rem 0;font-size:14px}
+.tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1.2rem}
+.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
+.tab.active{color:var(--text-accent);border-bottom-color:var(--border-accent)}
+.panel{display:none}.panel.active{display:block}
+.sec{margin-bottom:1.2rem}
+.sec-title{font-size:12px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;border-bottom:.5px solid var(--border);padding-bottom:5px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--text-secondary)}
+.field input,.field select{height:36px;padding:0 10px;font-size:14px;border:.5px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text-primary);width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:var(--border-accent)}
+.hint{font-size:11px;color:var(--text-muted);margin-top:2px}
+.btn{width:100%;padding:10px;font-size:14px;font-weight:500;cursor:pointer;border-radius:var(--radius);background:var(--fill-accent);color:var(--on-accent);border:none;margin-bottom:1rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn2{padding:8px 16px;font-size:13px;cursor:pointer;border-radius:var(--radius);background:var(--surface-1);color:var(--text-primary);border:.5px solid var(--border)}
+.note{background:var(--bg-accent);color:var(--text-accent);border-radius:var(--radius);padding:7px 12px;font-size:12px;margin-bottom:12px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.metric{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px}
+.metric .ml{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.metric .mv{font-size:22px;font-weight:500;color:var(--text-primary)}
+.metric.profit .mv{color:var(--text-success)}
+.metric.loss .mv{color:var(--text-danger)}
+.metric.warn .mv{color:var(--text-warning)}
+.breakdown{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px;font-size:13px;margin-bottom:10px}
+.brow{display:flex;justify-content:space-between;padding:3px 0;color:var(--text-secondary)}
+.brow.tot{border-top:.5px solid var(--border);margin-top:6px;padding-top:8px;font-weight:500;color:var(--text-primary)}
+.brow.red{color:var(--text-danger)}
+.verdict{padding:10px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;margin-bottom:12px}
+.verdict.good{background:var(--bg-success);color:var(--text-success)}
+.verdict.ok{background:var(--bg-warning);color:var(--text-warning)}
+.verdict.bad{background:var(--bg-danger);color:var(--text-danger)}
+.sim-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}
+.sim-table th{text-align:left;padding:5px 8px;color:var(--text-secondary);font-weight:500;border-bottom:.5px solid var(--border)}
+.sim-table td{padding:4px 8px;border-bottom:.5px solid var(--border)}
+.g{color:var(--text-success);font-weight:500}.r{color:var(--text-danger)}.w{color:var(--text-warning)}
+.listing-box{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:10px;max-height:300px;overflow-y:auto}
+.loading{display:flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:13px;padding:8px 0}
+.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--border-accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.copy-btn{padding:6px 12px;font-size:12px;cursor:pointer;border-radius:var(--radius);background:var(--surface-1);color:var(--text-secondary);border:.5px solid var(--border);margin-bottom:8px}
+.ai-box{border:.5px solid var(--border);border-radius:var(--radius);padding:10px;font-size:13px;background:var(--surface-1);margin-bottom:10px;color:var(--text-secondary);min-height:40px}
+</style>
+
+<div class="app">
+<h2 class="sr-only">eBay輸出 利益計算・出品フォーマット生成ツール</h2>
+
+<div class="note">eBay DDP制度：関税は発送者負担で計算　販売手数料26%＝eBay13.25%＋広告10%＋Payoneer2.75%</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('calc')">利益計算</button>
+  <button class="tab" onclick="switchTab('listing')">出品フォーマット生成（AI）</button>
+</div>
+
+<div id="panel-calc" class="panel active">
+  <div class="sec">
+    <div class="sec-title">仕入れ・コスト</div>
+    <div class="row2">
+      <div class="field"><label>仕入れ値（¥）</label><input type="number" id="cost" value="3000" min="0"></div>
+      <div class="field"><label>国内送料（¥）</label><input type="number" id="domestic" value="0" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>発送代行手数料（¥）</label><input type="number" id="agency" value="500" min="0"></div>
+      <div class="field"><label>その他（¥）</label><input type="number" id="other" value="0" min="0"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">国際送料（重量から自動計算）</div>
+    <div class="row2">
+      <div class="field">
+        <label>発送方法</label>
+        <select id="shipmethod" onchange="calcShip()">
+          <option value="ems">EMS</option>
+          <option value="epacket" selected>国際エアパケット</option>
+          <option value="fedex">FedEx（参考値）</option>
+        </select>
+      </div>
+      <div class="field"><label>重量（g）</label><input type="number" id="weight" value="300" min="1" oninput="calcShip()"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>国際送料（¥）<span style="font-size:11px;color:var(--text-success)">自動計算</span></label>
+        <input type="number" id="shipping" value="1210" min="0">
+        <span class="hint" id="shiphint">国際エアパケット 300g</span>
+      </div>
+      <div class="field"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">関税（DDP・発送者負担）</div>
+    <div class="row2">
+      <div class="field">
+        <label>商品カテゴリ</label>
+        <select id="category" onchange="setCatTariff()">
+          <option value="0">書籍・雑誌・地図・画集（0%）</option>
+          <option value="0">ポストカード・写真・印刷物（0%）</option>
+          <option value="0">光学ディスク・DVD・Blu-ray（0%）</option>
+          <option value="4.7">人形・ぬいぐるみ（4.7%）</option>
+          <option value="0">おもちゃ・ゲーム機（0%）</option>
+          <option value="0">メダル・トロフィー・置物（0%）</option>
+          <option value="0">ボールペン・万年筆（0%）</option>
+          <option value="0">ブリキ缶・金属容器（0%）</option>
+          <option value="0">コイン・記念メダル（0%）</option>
+          <option value="5">銀製アクセサリー（5%）</option>
+          <option value="5.3">プラスチック雑貨・ストラップ（5.3%）</option>
+          <option value="5.8">ガラス製食器・カップ（5.8%）</option>
+          <option value="7.2">磁器・陶器・有田焼（7.2%）</option>
+          <option value="11">ブローチ・ピン・模造ジュエリー（11%）</option>
+          <option value="14.9">アパレル・衣料品（14.9%）</option>
+          <option value="custom">カスタム入力</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>関税率（%）</label>
+        <input type="number" id="tariff" value="0" min="0" max="100" step="0.1" oninput="document.getElementById('tactual').value=0">
+        <span class="hint">中国製+7.5%・ベトナム製+46%・インドネシア製+32%</span>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label>関税実額（¥）※実績値がある場合（入力すると優先）</label>
+      <input type="number" id="tactual" value="0" min="0" oninput="document.getElementById('tariff').value=0">
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-title">販売設定</div>
+    <div class="row3">
+      <div class="field"><label>出品価格（$）</label><input type="number" id="price" value="45" min="0" step="1"></div>
+      <div class="field"><label>販売手数料（%）</label><input type="number" id="fee" value="26" min="0" max="100" step="0.1"></div>
+      <div class="field"><label>為替レート（¥/$）</label><input type="number" id="rate" value="158" min="1"></div>
+    </div>
+  </div>
+
+  <button class="btn" onclick="calculate()">計算する</button>
+
+  <div id="results" style="display:none">
+    <div class="sec">
+      <div class="sec-title">計算結果</div>
+      <div class="result-grid">
+        <div class="metric" id="m1"><div class="ml">純利益</div><div class="mv" id="r-profit">¥0</div></div>
+        <div class="metric" id="m2"><div class="ml">利益率</div><div class="mv" id="r-rate">0%</div></div>
+        <div class="metric"><div class="ml">損益分岐点</div><div class="mv" id="r-break" style="font-size:18px">$0</div></div>
+      </div>
+      <div class="breakdown">
+        <div class="brow"><span>売上（$→¥）</span><span id="b-sales">¥0</span></div>
+        <div class="brow red"><span>販売手数料（<span id="b-feepct">26</span>%）</span><span id="b-fee">-¥0</span></div>
+        <div class="brow"><span>手取り</span><span id="b-net">¥0</span></div>
+        <div class="brow" style="margin-top:6px"><span>仕入れ</span><span id="b-cost">-¥0</span></div>
+        <div class="brow"><span>国内送料</span><span id="b-dom">-¥0</span></div>
+        <div class="brow"><span>国際送料</span><span id="b-ship">-¥0</span></div>
+        <div class="brow"><span>発送代行</span><span id="b-agn">-¥0</span></div>
+        <div class="brow red" id="b-tarrow"><span>関税（DDP）</span><span id="b-tar">-¥0</span></div>
+        <div class="brow"><span>その他</span><span id="b-oth">-¥0</span></div>
+        <div class="brow tot"><span>総コスト</span><span id="b-total">¥0</span></div>
+        <div class="brow tot"><span>純利益</span><span id="b-profit2">¥0</span></div>
+      </div>
+      <div id="verdict" class="verdict good"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">価格別シミュレーション</div>
+      <table class="sim-table">
+        <thead><tr><th>出品価格</th><th>手取り</th><th>総コスト</th><th>利益</th><th>利益率</th></tr></thead>
+        <tbody id="simbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="panel-listing" class="panel">
+  <div class="sec">
+    <div class="sec-title">商品情報を入力してAIが出品フォーマットを生成</div>
+    <div class="field" style="margin-bottom:8px">
+      <label>仕入れ先URL（参考用・任意）</label>
+      <input type="text" id="l-url" placeholder="https://jp.mercari.com/item/...">
+    </div>
+    <div class="row2">
+      <div class="field"><label>商品名（日本語）</label><input type="text" id="l-name" placeholder="例：M1号 ウルトラQ ラゴン ソフビ"></div>
+      <div class="field"><label>仕入れ値（¥）</label><input type="number" id="l-cost" value="5000" min="0"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>商品カテゴリ</label><input type="text" id="l-cat" placeholder="例：ソフビ・昭和レトロ・オリンピックメダル"></div>
+      <div class="field"><label>状態</label><input type="text" id="l-cond" placeholder="例：未開封・やや傷汚れあり・箱付き"></div>
+    </div>
+    <div class="field" style="margin-bottom:8px">
+      <label>特記事項・アピールポイント</label>
+      <input type="text" id="l-note" placeholder="例：日本製・MADE IN JAPAN・1979年製・限定品・佐久間廃業後入手困難">
+    </div>
+    <div class="row2">
+      <div class="field"><label>推奨出品価格（$）</label><input type="number" id="l-price" value="75" min="0"></div>
+      <div class="field"><label>発送方法</label>
+        <select id="l-ship">
+          <option value="EMS">EMS</option>
+          <option value="国際エアパケット" selected>国際エアパケット</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn" id="gen-btn" onclick="generateListing()">AIで出品フォーマットを生成</button>
+
+  <div id="gen-status" style="display:none"></div>
+  <div id="gen-result" style="display:none">
+    <div class="sec">
+      <div class="sec-title">タイトル（80文字以内）</div>
+      <button class="copy-btn" onclick="copyText('title-box')">コピー</button>
+      <div class="listing-box" id="title-box"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">商品説明文（英語）</div>
+      <button class="copy-btn" onclick="copyText('desc-box')">コピー</button>
+      <div class="listing-box" id="desc-box"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">HTSコード・関税・カテゴリ</div>
+      <div class="listing-box" id="hts-box"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-title">利益計算サマリー</div>
+      <div class="listing-box" id="profit-box"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const EMS=[300,2700,500,3050,750,3400,1000,3750,1500,4450,2000,5150];
+const EPK=[100,870,200,1040,300,1210,500,1550,1000,2400,2000,4100];
+
+function calcShip(){
+  const m=document.getElementById('shipmethod').value;
+  const w=+document.getElementById('weight').value||300;
+  let c=0,h='';
+  if(m==='ems'){
+    for(let i=0;i<EMS.length;i+=2){if(w<=EMS[i]){c=EMS[i+1];break;}}
+    if(!c)c=5150+Math.ceil((w-2000)/500)*700;
+    h=`EMS アメリカ向け ${w}g`;
+  }else if(m==='epacket'){
+    for(let i=0;i<EPK.length;i+=2){if(w<=EPK[i]){c=EPK[i+1];break;}}
+    if(!c)c=4100+Math.ceil((w-2000)/500)*700;
+    h=`国際エアパケット ${w}g${w>2000?' ⚠️2kg超：EMS推奨':''}`;
+  }else{
+    c=Math.max(8000,Math.round(w*9));
+    h=`FedEx 参考値 ${w}g`;
+  }
+  document.getElementById('shipping').value=c;
+  document.getElementById('shiphint').textContent=h;
+}
+
+function setCatTariff(){
+  const v=document.getElementById('category').value;
+  if(v!=='custom')document.getElementById('tariff').value=v;
+}
+
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function getParams(){
+  return{
+    cost:+document.getElementById('cost').value||0,
+    domestic:+document.getElementById('domestic').value||0,
+    shipping:+document.getElementById('shipping').value||0,
+    agency:+document.getElementById('agency').value||500,
+    other:+document.getElementById('other').value||0,
+    fee:+document.getElementById('fee').value||26,
+    rate:+document.getElementById('rate').value||158,
+    tariff:+document.getElementById('tariff').value||0,
+    tactual:+document.getElementById('tactual').value||0,
+  };
+}
+
+function calcProfit(price,p){
+  const sales=price*p.rate;
+  const feeAmt=sales*(p.fee/100);
+  const net=sales-feeAmt;
+  const tar=p.tactual>0?p.tactual:sales*(p.tariff/100);
+  const total=p.cost+p.domestic+p.shipping+p.agency+p.other+tar;
+  const profit=net-total;
+  const rate=net>0?(profit/net)*100:-999;
+  return{sales,feeAmt,net,tar,total,profit,rate};
+}
+
+function calcBreakeven(p){
+  for(let px=1;px<=9999;px++){
+    const r=calcProfit(px,p);
+    if(r.rate>=10)return px;
+  }
+  return 9999;
+}
+
+function fmt(n){return'¥'+Math.round(n).toLocaleString();}
+function fmtP(n){return n.toFixed(1)+'%';}
+
+function calculate(){
+  const p=getParams();
+  const price=+document.getElementById('price').value||0;
+  const r=calcProfit(price,p);
+  const be=calcBreakeven(p);
+
+  document.getElementById('results').style.display='';
+  document.getElementById('r-profit').textContent=fmt(r.profit);
+  document.getElementById('r-rate').textContent=fmtP(r.rate);
+  document.getElementById('r-break').textContent='$'+be;
+
+  const m1=document.getElementById('m1'),m2=document.getElementById('m2');
+  m1.className='metric '+(r.profit<0?'loss':r.rate>=20?'profit':'warn');
+  m2.className='metric '+(r.rate<0?'loss':r.rate>=20?'profit':'warn');
+
+  document.getElementById('b-sales').textContent=fmt(r.sales);
+  document.getElementById('b-feepct').textContent=p.fee;
+  document.getElementById('b-fee').textContent='-'+fmt(r.feeAmt);
+  document.getElementById('b-net').textContent=fmt(r.net);
+  document.getElementById('b-cost').textContent='-'+fmt(p.cost);
+  document.getElementById('b-dom').textContent='-'+fmt(p.domestic);
+  document.getElementById('b-ship').textContent='-'+fmt(p.shipping);
+  document.getElementById('b-agn').textContent='-'+fmt(p.agency);
+  document.getElementById('b-tar').textContent='-'+fmt(r.tar);
+  document.getElementById('b-tarrow').style.display=r.tar>0?'':'none';
+  document.getElementById('b-oth').textContent='-'+fmt(p.other);
+  document.getElementById('b-total').textContent=fmt(r.total);
+  document.getElementById('b-profit2').textContent=fmt(r.profit);
+
+  const v=document.getElementById('verdict');
+  if(r.profit<0){v.className='verdict bad';v.textContent='赤字（'+fmt(r.profit)+'） 損益分岐点は$'+be+'以上';}
+  else if(r.rate<10){v.className='verdict bad';v.textContent='利益率不足（'+fmtP(r.rate)+'） $'+be+'以上で最低ライン到達';}
+  else if(r.rate<20){v.className='verdict ok';v.textContent='最低ライン付近（'+fmtP(r.rate)+'） $'+be+'以上で目標20%達成';}
+  else{v.className='verdict good';v.textContent='目標利益率達成（'+fmtP(r.rate)+'）';}
+
+  const prices=new Set();
+  for(let pp=Math.max(5,Math.floor(price*0.6));pp<=Math.ceil(price*1.6);pp+=Math.max(1,Math.round(price*0.1)))prices.add(Math.round(pp));
+  prices.add(Math.round(price));
+  const sorted=[...prices].sort((a,b)=>a-b);
+  const tbody=document.getElementById('simbody');
+  tbody.innerHTML='';
+  sorted.forEach(pp=>{
+    const sr=calcProfit(pp,p);
+    const cls=sr.rate>=20?'g':sr.rate>=10?'w':'r';
+    const cur=pp===Math.round(price);
+    tbody.innerHTML+=`<tr style="${cur?'background:var(--bg-accent);':''}">
+      <td>${cur?'▶ ':''}<strong>$${pp}</strong></td>
+      <td>${fmt(sr.net)}</td><td>${fmt(sr.total)}</td>
+      <td class="${cls}">${fmt(sr.profit)}</td>
+      <td class="${cls}">${fmtP(sr.rate)}</td>
+    </tr>`;
+  });
+}
+
+async function generateListing(){
+  const name=document.getElementById('l-name').value.trim();
+  if(!name){alert('商品名を入力してください');return;}
+
+  const cost=document.getElementById('l-cost').value;
+  const cat=document.getElementById('l-cat').value;
+  const cond=document.getElementById('l-cond').value;
+  const note=document.getElementById('l-note').value;
+  const price=document.getElementById('l-price').value;
+  const ship=document.getElementById('l-ship').value;
+  const url=document.getElementById('l-url').value;
+
+  const btn=document.getElementById('gen-btn');
+  btn.disabled=true;
+  const status=document.getElementById('gen-status');
+  status.style.display='';
+  status.innerHTML='<div class="loading"><div class="spinner"></div>AIが出品フォーマットを生成中...</div>';
+  document.getElementById('gen-result').style.display='none';
+
+  const prompt=`あなたはeBay輸出の専門家です。以下の商品のeBay出品フォーマットを作成してください。
+
+商品名：${name}
+仕入れ値：¥${cost}
+カテゴリ：${cat||'不明'}
+状態：${cond||'中古'}
+特記事項：${note||'なし'}
+推奨出品価格：$${price}
+発送方法：${ship}
+仕入れ先URL：${url||'なし'}
+
+以下の形式でJSONのみを返してください（他のテキスト不要）：
+{
+  "title": "eBayタイトル（英語・80文字以内・厳守）",
+  "description": "eBay商品説明文（英語・絵文字使用可・詳細に）",
+  "hts_code": "HTSコード",
+  "tariff_rate": 関税率（数値・%）,
+  "tariff_note": "関税の注意事項",
+  "ebay_category": "推奨eBayカテゴリ（英語）",
+  "vero_risk": "VeROリスクの有無と対策",
+  "cpsc_note": "CPSC規制の有無",
+  "profit_summary": "利益計算サマリー（仕入れ・送料・手数料・関税・推奨価格・利益率の概算）"
+}`;
+
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data=await res.json();
+    const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const jsonMatch=text.match(/\{[\s\S]*\}/);
+    if(!jsonMatch)throw new Error('JSON取得失敗');
+    const info=JSON.parse(jsonMatch[0]);
+
+    document.getElementById('title-box').textContent=info.title||'';
+    document.getElementById('desc-box').textContent=info.description||'';
+    document.getElementById('hts-box').textContent=
+      `HTSコード：${info.hts_code||'不明'}\n関税率：${info.tariff_rate||0}%\n関税注意：${info.tariff_note||'なし'}\neBayカテゴリ：${info.ebay_category||'不明'}\nVeROリスク：${info.vero_risk||'なし'}\nCPSC規制：${info.cpsc_note||'なし'}`;
+    document.getElementById('profit-box').textContent=info.profit_summary||'';
+
+    document.getElementById('gen-result').style.display='';
+    status.style.display='none';
+  }catch(e){
+    status.innerHTML=`<div style="color:var(--text-danger);font-size:13px;">エラー：${e.message}</div>`;
+  }
+  btn.disabled=false;
+}
+
+function copyText(id){
+  const text=document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=event.target;
+    btn.textContent='コピー完了！';
+    setTimeout(()=>btn.textContent='コピー',2000);
+  });
+}
+
+calcShip();
+calculate();
+</script>
