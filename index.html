@@ -1,203 +1,354 @@
-
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AYAME BLOOM JAPAN — eBay利益計算ツール</title>
 <style>
+:root{
+  --bg:#0f0f0f;--surface:#1c1c1e;--surface2:#2c2c2e;--surface3:#3a3a3c;
+  --border:#3a3a3c;--border2:#48484a;--text:#f2f2f7;--muted:#aeaeb2;--hint:#636366;
+  --accent:#e8c87a;--accent-dim:rgba(232,200,122,0.15);--accent-border:rgba(232,200,122,0.35);
+  --success:#32d74b;--success-dim:rgba(50,215,75,0.12);--success-border:rgba(50,215,75,0.3);
+  --danger:#ff453a;--danger-dim:rgba(255,69,58,0.12);--danger-border:rgba(255,69,58,0.3);
+  --warning:#ff9f0a;--warning-dim:rgba(255,159,10,0.12);--warning-border:rgba(255,159,10,0.3);
+  --radius:10px;--radius-sm:6px;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-.app{padding:1rem 0;font-size:14px}
-.tabs{display:flex;border-bottom:.5px solid var(--border);margin-bottom:1.2rem}
-.tab{padding:8px 16px;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent}
-.tab.active{color:var(--text-accent);border-bottom-color:var(--border-accent)}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,'Hiragino Sans',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+
+/* Header */
+header{background:rgba(15,15,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:14px 20px;position:sticky;top:0;z-index:100}
+.header-inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#0f0f0f}
+.logo-text{font-size:13px;font-weight:600;color:var(--text);letter-spacing:.02em}
+.logo-sub{font-size:11px;color:var(--muted);margin-left:4px}
+
+/* Container */
+.container{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+
+/* Tabs */
+.tabs{display:flex;background:var(--surface);border-radius:var(--radius);padding:3px;gap:3px;margin-bottom:20px}
+.tab{flex:1;padding:8px 12px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;border-radius:8px;transition:all .2s;text-align:center}
+.tab.active{background:var(--surface2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,0.4)}
 .panel{display:none}.panel.active{display:block}
-.sec{margin-bottom:1.2rem}
-.sec-title{font-size:12px;font-weight:500;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;border-bottom:.5px solid var(--border);padding-bottom:5px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px}
-.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:8px}
-.field{display:flex;flex-direction:column;gap:4px}
-.field label{font-size:12px;color:var(--text-secondary)}
-.field input,.field select{height:36px;padding:0 10px;font-size:14px;border:.5px solid var(--border);border-radius:var(--radius);background:var(--surface-2);color:var(--text-primary);width:100%}
-.field input:focus,.field select:focus{outline:none;border-color:var(--border-accent)}
-.hint{font-size:11px;color:var(--text-muted);margin-top:2px}
-.btn{width:100%;padding:10px;font-size:14px;font-weight:500;cursor:pointer;border-radius:var(--radius);background:var(--fill-accent);color:var(--on-accent);border:none;margin-bottom:1rem}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn2{padding:8px 16px;font-size:13px;cursor:pointer;border-radius:var(--radius);background:var(--surface-1);color:var(--text-primary);border:.5px solid var(--border)}
-.note{background:var(--bg-accent);color:var(--text-accent);border-radius:var(--radius);padding:7px 12px;font-size:12px;margin-bottom:12px}
-.result-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
-.metric{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px}
-.metric .ml{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
-.metric .mv{font-size:22px;font-weight:500;color:var(--text-primary)}
-.metric.profit .mv{color:var(--text-success)}
-.metric.loss .mv{color:var(--text-danger)}
-.metric.warn .mv{color:var(--text-warning)}
-.breakdown{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px;font-size:13px;margin-bottom:10px}
-.brow{display:flex;justify-content:space-between;padding:3px 0;color:var(--text-secondary)}
-.brow.tot{border-top:.5px solid var(--border);margin-top:6px;padding-top:8px;font-weight:500;color:var(--text-primary)}
-.brow.red{color:var(--text-danger)}
-.verdict{padding:10px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;margin-bottom:12px}
-.verdict.good{background:var(--bg-success);color:var(--text-success)}
-.verdict.ok{background:var(--bg-warning);color:var(--text-warning)}
-.verdict.bad{background:var(--bg-danger);color:var(--text-danger)}
-.sim-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:1rem}
-.sim-table th{text-align:left;padding:5px 8px;color:var(--text-secondary);font-weight:500;border-bottom:.5px solid var(--border)}
-.sim-table td{padding:4px 8px;border-bottom:.5px solid var(--border)}
-.g{color:var(--text-success);font-weight:500}.r{color:var(--text-danger)}.w{color:var(--text-warning)}
-.listing-box{background:var(--surface-1);border-radius:var(--radius);padding:12px 14px;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-bottom:10px;max-height:300px;overflow-y:auto}
-.loading{display:flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:13px;padding:8px 0}
-.spinner{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--border-accent);border-radius:50%;animation:spin .8s linear infinite}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.card-icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.card-icon.gold{background:var(--accent-dim);color:var(--accent)}
+.card-icon.blue{background:rgba(10,132,255,0.15);color:#0a84ff}
+.card-icon.green{background:var(--success-dim);color:var(--success)}
+.card-icon.purple{background:rgba(191,90,242,0.15);color:#bf5af2}
+.card-title{font-size:13px;font-weight:600;color:var(--text)}
+.card-body{padding:14px 16px}
+
+/* Grid */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+@media(max-width:580px){.g2,.g3{grid-template-columns:1fr}}
+
+/* Fields */
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select{
+  height:38px;padding:0 12px;font-size:14px;
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  background:var(--surface2);color:var(--text);width:100%;
+  transition:border-color .15s,box-shadow .15s;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim)}
+.field select option{background:var(--surface2)}
+.hint{font-size:11px;color:var(--hint);margin-top:2px}
+.auto-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;background:var(--success-dim);color:var(--success);border:1px solid var(--success-border);padding:2px 6px;border-radius:4px}
+.gap{gap:10px;display:flex;flex-direction:column}
+
+/* Button */
+.btn{width:100%;padding:13px;font-size:15px;font-weight:700;cursor:pointer;border-radius:var(--radius);background:var(--accent);color:#0f0f0f;border:none;letter-spacing:.02em;transition:opacity .15s;margin-top:4px}
+.btn:hover{opacity:.88}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-copy{padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;border-radius:var(--radius-sm);background:var(--surface2);color:var(--muted);border:1px solid var(--border2);transition:color .15s}
+.btn-copy:hover{color:var(--text)}
+
+/* Note */
+.note{background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--accent);margin-bottom:16px;line-height:1.6}
+
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+@media(max-width:480px){.metrics{grid-template-columns:1fr}}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px}
+.metric .ml{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.metric .mv{font-size:24px;font-weight:700;letter-spacing:-.02em}
+.metric.profit{border-color:var(--success-border);background:var(--success-dim)}
+.metric.profit .mv{color:var(--success)}
+.metric.loss{border-color:var(--danger-border);background:var(--danger-dim)}
+.metric.loss .mv{color:var(--danger)}
+.metric.warn{border-color:var(--warning-border);background:var(--warning-dim)}
+.metric.warn .mv{color:var(--warning)}
+
+/* Breakdown */
+.breakdown{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.brow{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px}
+.brow:last-child{border-bottom:none}
+.brow .label{color:var(--muted)}
+.brow .val{font-weight:500;font-variant-numeric:tabular-nums}
+.brow.red .label{color:var(--danger)}
+.brow.red .val{color:var(--danger)}
+.brow.tot{background:var(--surface2)}
+.brow.tot .label{color:var(--text);font-weight:600}
+.brow.tot .val{color:var(--text);font-weight:700;font-size:15px}
+
+/* Verdict */
+.verdict{padding:12px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;margin-bottom:16px;border-width:1px;border-style:solid}
+.verdict.good{background:var(--success-dim);color:var(--success);border-color:var(--success-border)}
+.verdict.ok{background:var(--warning-dim);color:var(--warning);border-color:var(--warning-border)}
+.verdict.bad{background:var(--danger-dim);color:var(--danger);border-color:var(--danger-border)}
+
+/* Sim table */
+.sim-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em;background:var(--surface2);border-bottom:1px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr.cur td{background:rgba(232,200,122,0.06)}
+.g{color:var(--success);font-weight:600}
+.r{color:var(--danger)}
+.w{color:var(--warning)}
+
+/* Output boxes */
+.output-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px}
+.output-hdr{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.output-hdr span{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.output-box{padding:12px 14px;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow-y:auto;font-family:'Courier New',monospace;color:var(--text)}
+
+/* API section */
+.api-card{background:var(--surface);border:1px solid var(--accent-border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px}
+.api-card h3{font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px}
+.api-card p{font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6}
+
+/* Loading */
+.loading{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;padding:10px 0}
+.spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
-.copy-btn{padding:6px 12px;font-size:12px;cursor:pointer;border-radius:var(--radius);background:var(--surface-1);color:var(--text-secondary);border:.5px solid var(--border);margin-bottom:8px}
-.ai-box{border:.5px solid var(--border);border-radius:var(--radius);padding:10px;font-size:13px;background:var(--surface-1);margin-bottom:10px;color:var(--text-secondary);min-height:40px}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:16px 0}
+
+footer{border-top:1px solid var(--border);padding:16px;text-align:center;font-size:11px;color:var(--hint);margin-top:20px}
 </style>
+</head>
+<body>
 
-<div class="app">
-<h2 class="sr-only">eBay輸出 利益計算・出品フォーマット生成ツール</h2>
+<header>
+  <div class="header-inner">
+    <div class="logo-mark">A</div>
+    <div>
+      <span class="logo-text">AYAME BLOOM JAPAN</span>
+      <span class="logo-sub">eBay輸出ツール</span>
+    </div>
+  </div>
+</header>
 
-<div class="note">eBay DDP制度：関税は発送者負担で計算　販売手数料26%＝eBay13.25%＋広告10%＋Payoneer2.75%</div>
+<div class="container">
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('calc')">利益計算</button>
-  <button class="tab" onclick="switchTab('listing')">出品フォーマット生成（AI）</button>
+  <button class="tab active" onclick="switchTab('calc',this)">利益計算</button>
+  <button class="tab" onclick="switchTab('listing',this)">出品フォーマット生成（AI）</button>
 </div>
 
+<!-- 利益計算タブ -->
 <div id="panel-calc" class="panel active">
-  <div class="sec">
-    <div class="sec-title">仕入れ・コスト</div>
-    <div class="row2">
-      <div class="field"><label>仕入れ値（¥）</label><input type="number" id="cost" value="3000" min="0"></div>
-      <div class="field"><label>国内送料（¥）</label><input type="number" id="domestic" value="0" min="0"></div>
+
+  <div class="note">
+    eBay DDP制度：関税は発送者負担 ／ 販売手数料26% = eBay 13.25% + 広告10% + Payoneer 2.75%
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon gold">①</div>
+      <span class="card-title">仕入れ・コスト</span>
     </div>
-    <div class="row2">
-      <div class="field"><label>発送代行手数料（¥）</label><input type="number" id="agency" value="500" min="0"></div>
-      <div class="field"><label>その他（¥）</label><input type="number" id="other" value="0" min="0"></div>
+    <div class="card-body">
+      <div class="g2" style="margin-bottom:10px">
+        <div class="field"><label>仕入れ値（¥）</label><input type="number" id="cost" value="3000" min="0"></div>
+        <div class="field"><label>国内送料（¥）</label><input type="number" id="domestic" value="0" min="0"></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>発送代行手数料（¥）</label><input type="number" id="agency" value="500" min="0"></div>
+        <div class="field"><label>その他（消費税等）（¥）</label><input type="number" id="other" value="0" min="0"></div>
+      </div>
     </div>
   </div>
 
-  <div class="sec">
-    <div class="sec-title">国際送料（重量から自動計算）</div>
-    <div class="row2">
-      <div class="field">
-        <label>発送方法</label>
-        <select id="shipmethod" onchange="calcShip()">
-          <option value="ems">EMS</option>
-          <option value="epacket" selected>国際エアパケット</option>
-          <option value="fedex">FedEx（参考値）</option>
-        </select>
-      </div>
-      <div class="field"><label>重量（g）</label><input type="number" id="weight" value="300" min="1" oninput="calcShip()"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon blue">②</div>
+      <span class="card-title">国際送料</span>
+      <span class="auto-badge">自動計算</span>
     </div>
-    <div class="row2">
-      <div class="field">
-        <label>国際送料（¥）<span style="font-size:11px;color:var(--text-success)">自動計算</span></label>
-        <input type="number" id="shipping" value="1210" min="0">
-        <span class="hint" id="shiphint">国際エアパケット 300g</span>
+    <div class="card-body">
+      <div class="g2" style="margin-bottom:10px">
+        <div class="field">
+          <label>発送方法</label>
+          <select id="shipmethod" onchange="calcShip()">
+            <option value="ems">EMS</option>
+            <option value="epacket" selected>国際エアパケット</option>
+            <option value="fedex">FedEx（参考値）</option>
+          </select>
+        </div>
+        <div class="field"><label>重量（g）</label><input type="number" id="weight" value="300" min="1" oninput="calcShip()"></div>
       </div>
-      <div class="field"></div>
+      <div class="g2">
+        <div class="field">
+          <label>国際送料（¥）</label>
+          <input type="number" id="shipping" value="1210" min="0">
+          <span class="hint" id="shiphint">国際エアパケット 300g</span>
+        </div>
+        <div class="field"></div>
+      </div>
     </div>
   </div>
 
-  <div class="sec">
-    <div class="sec-title">関税（DDP・発送者負担）</div>
-    <div class="row2">
-      <div class="field">
-        <label>商品カテゴリ</label>
-        <select id="category" onchange="setCatTariff()">
-          <option value="0">書籍・雑誌・地図・画集（0%）</option>
-          <option value="0">ポストカード・写真・印刷物（0%）</option>
-          <option value="0">光学ディスク・DVD・Blu-ray（0%）</option>
-          <option value="4.7">人形・ぬいぐるみ（4.7%）</option>
-          <option value="0">おもちゃ・ゲーム機（0%）</option>
-          <option value="0">メダル・トロフィー・置物（0%）</option>
-          <option value="0">ボールペン・万年筆（0%）</option>
-          <option value="0">ブリキ缶・金属容器（0%）</option>
-          <option value="0">コイン・記念メダル（0%）</option>
-          <option value="5">銀製アクセサリー（5%）</option>
-          <option value="5.3">プラスチック雑貨・ストラップ（5.3%）</option>
-          <option value="5.8">ガラス製食器・カップ（5.8%）</option>
-          <option value="7.2">磁器・陶器・有田焼（7.2%）</option>
-          <option value="11">ブローチ・ピン・模造ジュエリー（11%）</option>
-          <option value="14.9">アパレル・衣料品（14.9%）</option>
-          <option value="custom">カスタム入力</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>関税率（%）</label>
-        <input type="number" id="tariff" value="0" min="0" max="100" step="0.1" oninput="document.getElementById('tactual').value=0">
-        <span class="hint">中国製+7.5%・ベトナム製+46%・インドネシア製+32%</span>
-      </div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon green">③</div>
+      <span class="card-title">関税（DDP・発送者負担）</span>
     </div>
-    <div class="field" style="margin-bottom:8px">
-      <label>関税実額（¥）※実績値がある場合（入力すると優先）</label>
-      <input type="number" id="tactual" value="0" min="0" oninput="document.getElementById('tariff').value=0">
+    <div class="card-body">
+      <div class="g2" style="margin-bottom:10px">
+        <div class="field">
+          <label>商品カテゴリ <span class="auto-badge">関税率自動</span></label>
+          <select id="category" onchange="setCatTariff()">
+            <option value="0">書籍・雑誌・地図・画集（0%）</option>
+            <option value="0">ポストカード・写真・印刷物（0%）</option>
+            <option value="0">光学ディスク・DVD・Blu-ray（0%）</option>
+            <option value="4.7">人形・ぬいぐるみ（4.7%）</option>
+            <option value="0">おもちゃ・ゲーム機（0%）</option>
+            <option value="0">メダル・トロフィー・置物（0%）</option>
+            <option value="0">ボールペン・万年筆（0%）</option>
+            <option value="0">ブリキ缶・金属容器（0%）</option>
+            <option value="0">コイン・記念メダル（0%）</option>
+            <option value="5">銀製アクセサリー（5%）</option>
+            <option value="5.3">プラスチック雑貨・ストラップ（5.3%）</option>
+            <option value="5.8">ガラス製食器・カップ（5.8%）</option>
+            <option value="7.2">磁器・陶器・有田焼（7.2%）</option>
+            <option value="11">ブローチ・ピン・模造ジュエリー（11%）</option>
+            <option value="14.9">アパレル・衣料品（14.9%）</option>
+            <option value="custom">カスタム入力</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>関税率（%）</label>
+          <input type="number" id="tariff" value="0" min="0" max="100" step="0.1" oninput="document.getElementById('tactual').value=0">
+          <span class="hint">中国製+7.5% ／ ベトナム製+46% ／ インドネシア製+32%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>関税実額（¥）— 実績値がある場合に入力（優先適用）</label>
+        <input type="number" id="tactual" value="0" min="0" oninput="document.getElementById('tariff').value=0">
+      </div>
     </div>
   </div>
 
-  <div class="sec">
-    <div class="sec-title">販売設定</div>
-    <div class="row3">
-      <div class="field"><label>出品価格（$）</label><input type="number" id="price" value="45" min="0" step="1"></div>
-      <div class="field"><label>販売手数料（%）</label><input type="number" id="fee" value="26" min="0" max="100" step="0.1"></div>
-      <div class="field"><label>為替レート（¥/$）</label><input type="number" id="rate" value="158" min="1"></div>
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon purple">④</div>
+      <span class="card-title">販売設定</span>
+    </div>
+    <div class="card-body">
+      <div class="g3">
+        <div class="field"><label>出品価格（$）</label><input type="number" id="price" value="45" min="0" step="1"></div>
+        <div class="field"><label>販売手数料（%）</label><input type="number" id="fee" value="26" min="0" max="100" step="0.1"></div>
+        <div class="field"><label>為替レート（¥/$）</label><input type="number" id="rate" value="158" min="1"></div>
+      </div>
     </div>
   </div>
 
   <button class="btn" onclick="calculate()">計算する</button>
 
   <div id="results" style="display:none">
-    <div class="sec">
-      <div class="sec-title">計算結果</div>
-      <div class="result-grid">
-        <div class="metric" id="m1"><div class="ml">純利益</div><div class="mv" id="r-profit">¥0</div></div>
-        <div class="metric" id="m2"><div class="ml">利益率</div><div class="mv" id="r-rate">0%</div></div>
-        <div class="metric"><div class="ml">損益分岐点</div><div class="mv" id="r-break" style="font-size:18px">$0</div></div>
-      </div>
-      <div class="breakdown">
-        <div class="brow"><span>売上（$→¥）</span><span id="b-sales">¥0</span></div>
-        <div class="brow red"><span>販売手数料（<span id="b-feepct">26</span>%）</span><span id="b-fee">-¥0</span></div>
-        <div class="brow"><span>手取り</span><span id="b-net">¥0</span></div>
-        <div class="brow" style="margin-top:6px"><span>仕入れ</span><span id="b-cost">-¥0</span></div>
-        <div class="brow"><span>国内送料</span><span id="b-dom">-¥0</span></div>
-        <div class="brow"><span>国際送料</span><span id="b-ship">-¥0</span></div>
-        <div class="brow"><span>発送代行</span><span id="b-agn">-¥0</span></div>
-        <div class="brow red" id="b-tarrow"><span>関税（DDP）</span><span id="b-tar">-¥0</span></div>
-        <div class="brow"><span>その他</span><span id="b-oth">-¥0</span></div>
-        <div class="brow tot"><span>総コスト</span><span id="b-total">¥0</span></div>
-        <div class="brow tot"><span>純利益</span><span id="b-profit2">¥0</span></div>
-      </div>
-      <div id="verdict" class="verdict good"></div>
+
+    <div class="metrics">
+      <div class="metric" id="m1"><div class="ml">純利益</div><div class="mv" id="r-profit">¥0</div></div>
+      <div class="metric" id="m2"><div class="ml">利益率</div><div class="mv" id="r-rate">0%</div></div>
+      <div class="metric"><div class="ml">損益分岐点</div><div class="mv" id="r-break" style="font-size:20px">$0</div></div>
     </div>
-    <div class="sec">
-      <div class="sec-title">価格別シミュレーション</div>
-      <table class="sim-table">
+
+    <div id="verdict" class="verdict good"></div>
+
+    <div class="breakdown">
+      <div class="brow"><span class="label">売上（$→¥）</span><span class="val" id="b-sales">¥0</span></div>
+      <div class="brow red"><span class="label">販売手数料（<span id="b-feepct">26</span>%）</span><span class="val" id="b-fee">-¥0</span></div>
+      <div class="brow"><span class="label">手取り</span><span class="val" id="b-net">¥0</span></div>
+      <div class="brow"><span class="label">仕入れ</span><span class="val" id="b-cost">-¥0</span></div>
+      <div class="brow"><span class="label">国内送料</span><span class="val" id="b-dom">-¥0</span></div>
+      <div class="brow"><span class="label">国際送料</span><span class="val" id="b-ship">-¥0</span></div>
+      <div class="brow"><span class="label">発送代行</span><span class="val" id="b-agn">-¥0</span></div>
+      <div class="brow red" id="b-tarrow"><span class="label">関税（DDP）</span><span class="val" id="b-tar">-¥0</span></div>
+      <div class="brow"><span class="label">その他</span><span class="val" id="b-oth">-¥0</span></div>
+      <div class="brow tot"><span class="label">総コスト</span><span class="val" id="b-total">¥0</span></div>
+      <div class="brow tot"><span class="label">純利益</span><span class="val" id="b-profit2">¥0</span></div>
+    </div>
+
+    <div class="sim-wrap">
+      <table>
         <thead><tr><th>出品価格</th><th>手取り</th><th>総コスト</th><th>利益</th><th>利益率</th></tr></thead>
         <tbody id="simbody"></tbody>
       </table>
     </div>
+
   </div>
 </div>
 
+<!-- 出品フォーマット生成タブ -->
 <div id="panel-listing" class="panel">
-  <div class="sec">
-    <div class="sec-title">商品情報を入力してAIが出品フォーマットを生成</div>
-    <div class="field" style="margin-bottom:8px">
-      <label>仕入れ先URL（参考用・任意）</label>
-      <input type="text" id="l-url" placeholder="https://jp.mercari.com/item/...">
+
+  <div class="api-card">
+    <h3>⚙️ Claude APIキーの設定（初回のみ）</h3>
+    <p>AI生成機能を使うにはAnthropicのAPIキーが必要です。<a href="https://console.anthropic.com" target="_blank" style="color:var(--accent)">console.anthropic.com</a> で取得してください。キーはこのブラウザにのみ保存されます。</p>
+    <div class="g2">
+      <div class="field">
+        <label>APIキー（sk-ant-...）</label>
+        <input type="password" id="apikey" placeholder="sk-ant-api03-..." oninput="saveKey()">
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <span id="key-status" style="font-size:12px;color:var(--muted);padding-top:22px"></span>
+      </div>
     </div>
-    <div class="row2">
-      <div class="field"><label>商品名（日本語）</label><input type="text" id="l-name" placeholder="例：M1号 ウルトラQ ラゴン ソフビ"></div>
-      <div class="field"><label>仕入れ値（¥）</label><input type="number" id="l-cost" value="5000" min="0"></div>
+  </div>
+
+  <div class="note">商品情報を入力するとAIが英語タイトル・説明文・HTSコード・VeROリスクを自動生成します</div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon gold">商</div>
+      <span class="card-title">商品情報</span>
     </div>
-    <div class="row2">
-      <div class="field"><label>商品カテゴリ</label><input type="text" id="l-cat" placeholder="例：ソフビ・昭和レトロ・オリンピックメダル"></div>
-      <div class="field"><label>状態</label><input type="text" id="l-cond" placeholder="例：未開封・やや傷汚れあり・箱付き"></div>
-    </div>
-    <div class="field" style="margin-bottom:8px">
-      <label>特記事項・アピールポイント</label>
-      <input type="text" id="l-note" placeholder="例：日本製・MADE IN JAPAN・1979年製・限定品・佐久間廃業後入手困難">
-    </div>
-    <div class="row2">
-      <div class="field"><label>推奨出品価格（$）</label><input type="number" id="l-price" value="75" min="0"></div>
-      <div class="field"><label>発送方法</label>
-        <select id="l-ship">
-          <option value="EMS">EMS</option>
-          <option value="国際エアパケット" selected>国際エアパケット</option>
-        </select>
+    <div class="card-body gap">
+      <div class="field">
+        <label>仕入れ先URL（任意）</label>
+        <input type="text" id="l-url" placeholder="https://jp.mercari.com/item/...">
+      </div>
+      <div class="g2">
+        <div class="field"><label>商品名（日本語）※必須</label><input type="text" id="l-name" placeholder="例：M1号 ウルトラQ ラゴン ソフビ 未開封"></div>
+        <div class="field"><label>仕入れ値（¥）</label><input type="number" id="l-cost" value="5000" min="0"></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>カテゴリ・ジャンル</label><input type="text" id="l-cat" placeholder="例：昭和ソフビ・オリンピックメダル"></div>
+        <div class="field"><label>状態</label><input type="text" id="l-cond" placeholder="例：未開封・箱付き・やや傷汚れあり"></div>
+      </div>
+      <div class="field">
+        <label>アピールポイント・特記事項</label>
+        <input type="text" id="l-note" placeholder="例：日本製・1979年製・限定5000体・メーカー廃業後入手困難">
+      </div>
+      <div class="g2">
+        <div class="field"><label>推奨出品価格（$）</label><input type="number" id="l-price" value="75" min="0"></div>
+        <div class="field"><label>発送方法</label>
+          <select id="l-ship">
+            <option value="EMS">EMS</option>
+            <option value="国際エアパケット" selected>国際エアパケット</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -205,32 +356,45 @@
   <button class="btn" id="gen-btn" onclick="generateListing()">AIで出品フォーマットを生成</button>
 
   <div id="gen-status" style="display:none"></div>
+
   <div id="gen-result" style="display:none">
-    <div class="sec">
-      <div class="sec-title">タイトル（80文字以内）</div>
-      <button class="copy-btn" onclick="copyText('title-box')">コピー</button>
-      <div class="listing-box" id="title-box"></div>
+    <div class="output-wrap">
+      <div class="output-hdr"><span>タイトル（80文字以内）</span><button class="btn-copy" onclick="copyBox('title-box',this)">コピー</button></div>
+      <div class="output-box" id="title-box"></div>
     </div>
-    <div class="sec">
-      <div class="sec-title">商品説明文（英語）</div>
-      <button class="copy-btn" onclick="copyText('desc-box')">コピー</button>
-      <div class="listing-box" id="desc-box"></div>
+    <div class="output-wrap">
+      <div class="output-hdr"><span>商品説明文（英語）</span><button class="btn-copy" onclick="copyBox('desc-box',this)">コピー</button></div>
+      <div class="output-box" id="desc-box"></div>
     </div>
-    <div class="sec">
-      <div class="sec-title">HTSコード・関税・カテゴリ</div>
-      <div class="listing-box" id="hts-box"></div>
+    <div class="output-wrap">
+      <div class="output-hdr"><span>HTS・関税・カテゴリ・リスク</span></div>
+      <div class="output-box" id="hts-box"></div>
     </div>
-    <div class="sec">
-      <div class="sec-title">利益計算サマリー</div>
-      <div class="listing-box" id="profit-box"></div>
+    <div class="output-wrap">
+      <div class="output-hdr"><span>利益サマリー</span></div>
+      <div class="output-box" id="profit-box"></div>
     </div>
   </div>
 </div>
+
 </div>
+
+<footer>AYAME BLOOM JAPAN — eBay Export Tool ／ For internal use only</footer>
 
 <script>
 const EMS=[300,2700,500,3050,750,3400,1000,3750,1500,4450,2000,5150];
 const EPK=[100,870,200,1040,300,1210,500,1550,1000,2400,2000,4100];
+
+window.onload=function(){
+  const k=localStorage.getItem('abj_apikey');
+  if(k){document.getElementById('apikey').value=k;document.getElementById('key-status').textContent='✅ キー設定済み';}
+  calcShip();calculate();
+};
+
+function saveKey(){
+  const k=document.getElementById('apikey').value.trim();
+  if(k.startsWith('sk-')){localStorage.setItem('abj_apikey',k);document.getElementById('key-status').textContent='✅ 保存しました';}
+}
 
 function calcShip(){
   const m=document.getElementById('shipmethod').value;
@@ -244,10 +408,7 @@ function calcShip(){
     for(let i=0;i<EPK.length;i+=2){if(w<=EPK[i]){c=EPK[i+1];break;}}
     if(!c)c=4100+Math.ceil((w-2000)/500)*700;
     h=`国際エアパケット ${w}g${w>2000?' ⚠️2kg超：EMS推奨':''}`;
-  }else{
-    c=Math.max(8000,Math.round(w*9));
-    h=`FedEx 参考値 ${w}g`;
-  }
+  }else{c=Math.max(8000,Math.round(w*9));h=`FedEx 参考値 ${w}g`;}
   document.getElementById('shipping').value=c;
   document.getElementById('shiphint').textContent=h;
 }
@@ -257,14 +418,14 @@ function setCatTariff(){
   if(v!=='custom')document.getElementById('tariff').value=v;
 }
 
-function switchTab(t){
+function switchTab(t,el){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
   document.getElementById('panel-'+t).classList.add('active');
-  event.target.classList.add('active');
+  el.classList.add('active');
 }
 
-function getParams(){
+function getP(){
   return{
     cost:+document.getElementById('cost').value||0,
     domestic:+document.getElementById('domestic').value||0,
@@ -278,43 +439,27 @@ function getParams(){
   };
 }
 
-function calcProfit(price,p){
-  const sales=price*p.rate;
-  const feeAmt=sales*(p.fee/100);
-  const net=sales-feeAmt;
+function calc(price,p){
+  const sales=price*p.rate,feeAmt=sales*(p.fee/100),net=sales-feeAmt;
   const tar=p.tactual>0?p.tactual:sales*(p.tariff/100);
   const total=p.cost+p.domestic+p.shipping+p.agency+p.other+tar;
-  const profit=net-total;
-  const rate=net>0?(profit/net)*100:-999;
+  const profit=net-total,rate=net>0?(profit/net)*100:-999;
   return{sales,feeAmt,net,tar,total,profit,rate};
 }
 
-function calcBreakeven(p){
-  for(let px=1;px<=9999;px++){
-    const r=calcProfit(px,p);
-    if(r.rate>=10)return px;
-  }
-  return 9999;
-}
-
+function be(p){for(let px=1;px<=9999;px++){if(calc(px,p).rate>=10)return px;}return 9999;}
 function fmt(n){return'¥'+Math.round(n).toLocaleString();}
 function fmtP(n){return n.toFixed(1)+'%';}
 
 function calculate(){
-  const p=getParams();
-  const price=+document.getElementById('price').value||0;
-  const r=calcProfit(price,p);
-  const be=calcBreakeven(p);
-
+  const p=getP(),price=+document.getElementById('price').value||0;
+  const r=calc(price,p),b=be(p);
   document.getElementById('results').style.display='';
   document.getElementById('r-profit').textContent=fmt(r.profit);
   document.getElementById('r-rate').textContent=fmtP(r.rate);
-  document.getElementById('r-break').textContent='$'+be;
-
-  const m1=document.getElementById('m1'),m2=document.getElementById('m2');
-  m1.className='metric '+(r.profit<0?'loss':r.rate>=20?'profit':'warn');
-  m2.className='metric '+(r.rate<0?'loss':r.rate>=20?'profit':'warn');
-
+  document.getElementById('r-break').textContent='$'+b;
+  document.getElementById('m1').className='metric '+(r.profit<0?'loss':r.rate>=20?'profit':'warn');
+  document.getElementById('m2').className='metric '+(r.rate<0?'loss':r.rate>=20?'profit':'warn');
   document.getElementById('b-sales').textContent=fmt(r.sales);
   document.getElementById('b-feepct').textContent=p.fee;
   document.getElementById('b-fee').textContent='-'+fmt(r.feeAmt);
@@ -328,114 +473,63 @@ function calculate(){
   document.getElementById('b-oth').textContent='-'+fmt(p.other);
   document.getElementById('b-total').textContent=fmt(r.total);
   document.getElementById('b-profit2').textContent=fmt(r.profit);
-
   const v=document.getElementById('verdict');
-  if(r.profit<0){v.className='verdict bad';v.textContent='赤字（'+fmt(r.profit)+'） 損益分岐点は$'+be+'以上';}
-  else if(r.rate<10){v.className='verdict bad';v.textContent='利益率不足（'+fmtP(r.rate)+'） $'+be+'以上で最低ライン到達';}
-  else if(r.rate<20){v.className='verdict ok';v.textContent='最低ライン付近（'+fmtP(r.rate)+'） $'+be+'以上で目標20%達成';}
+  if(r.profit<0){v.className='verdict bad';v.textContent='赤字（'+fmt(r.profit)+'） — 損益分岐点は $'+b+' 以上';}
+  else if(r.rate<10){v.className='verdict bad';v.textContent='利益率不足（'+fmtP(r.rate)+'） — $'+b+' 以上で最低ライン到達';}
+  else if(r.rate<20){v.className='verdict ok';v.textContent='最低ライン付近（'+fmtP(r.rate)+'） — $'+b+' 以上で目標20%達成';}
   else{v.className='verdict good';v.textContent='目標利益率達成（'+fmtP(r.rate)+'）';}
-
   const prices=new Set();
-  for(let pp=Math.max(5,Math.floor(price*0.6));pp<=Math.ceil(price*1.6);pp+=Math.max(1,Math.round(price*0.1)))prices.add(Math.round(pp));
+  for(let pp=Math.max(5,Math.floor(price*.6));pp<=Math.ceil(price*1.6);pp+=Math.max(1,Math.round(price*.1)))prices.add(Math.round(pp));
   prices.add(Math.round(price));
-  const sorted=[...prices].sort((a,b)=>a-b);
-  const tbody=document.getElementById('simbody');
-  tbody.innerHTML='';
-  sorted.forEach(pp=>{
-    const sr=calcProfit(pp,p);
-    const cls=sr.rate>=20?'g':sr.rate>=10?'w':'r';
-    const cur=pp===Math.round(price);
-    tbody.innerHTML+=`<tr style="${cur?'background:var(--bg-accent);':''}">
-      <td>${cur?'▶ ':''}<strong>$${pp}</strong></td>
-      <td>${fmt(sr.net)}</td><td>${fmt(sr.total)}</td>
-      <td class="${cls}">${fmt(sr.profit)}</td>
-      <td class="${cls}">${fmtP(sr.rate)}</td>
-    </tr>`;
+  const tbody=document.getElementById('simbody');tbody.innerHTML='';
+  [...prices].sort((a,b)=>a-b).forEach(pp=>{
+    const sr=calc(pp,p),cls=sr.rate>=20?'g':sr.rate>=10?'w':'r',cur=pp===Math.round(price);
+    tbody.innerHTML+=`<tr class="${cur?'cur':''}"><td>${cur?'▶ ':''}<strong>$${pp}</strong></td><td>${fmt(sr.net)}</td><td>${fmt(sr.total)}</td><td class="${cls}">${fmt(sr.profit)}</td><td class="${cls}">${fmtP(sr.rate)}</td></tr>`;
   });
 }
 
 async function generateListing(){
   const name=document.getElementById('l-name').value.trim();
   if(!name){alert('商品名を入力してください');return;}
-
-  const cost=document.getElementById('l-cost').value;
-  const cat=document.getElementById('l-cat').value;
-  const cond=document.getElementById('l-cond').value;
-  const note=document.getElementById('l-note').value;
-  const price=document.getElementById('l-price').value;
-  const ship=document.getElementById('l-ship').value;
+  const apikey=localStorage.getItem('abj_apikey');
+  if(!apikey||!apikey.startsWith('sk-')){alert('APIキーを設定してください');return;}
+  const cost=document.getElementById('l-cost').value,cat=document.getElementById('l-cat').value;
+  const cond=document.getElementById('l-cond').value,note=document.getElementById('l-note').value;
+  const price=document.getElementById('l-price').value,ship=document.getElementById('l-ship').value;
   const url=document.getElementById('l-url').value;
-
-  const btn=document.getElementById('gen-btn');
-  btn.disabled=true;
-  const status=document.getElementById('gen-status');
-  status.style.display='';
+  const btn=document.getElementById('gen-btn');btn.disabled=true;
+  const status=document.getElementById('gen-status');status.style.display='';
   status.innerHTML='<div class="loading"><div class="spinner"></div>AIが出品フォーマットを生成中...</div>';
   document.getElementById('gen-result').style.display='none';
-
-  const prompt=`あなたはeBay輸出の専門家です。以下の商品のeBay出品フォーマットを作成してください。
-
-商品名：${name}
-仕入れ値：¥${cost}
-カテゴリ：${cat||'不明'}
-状態：${cond||'中古'}
-特記事項：${note||'なし'}
-推奨出品価格：$${price}
-発送方法：${ship}
-仕入れ先URL：${url||'なし'}
-
-以下の形式でJSONのみを返してください（他のテキスト不要）：
-{
-  "title": "eBayタイトル（英語・80文字以内・厳守）",
-  "description": "eBay商品説明文（英語・絵文字使用可・詳細に）",
-  "hts_code": "HTSコード",
-  "tariff_rate": 関税率（数値・%）,
-  "tariff_note": "関税の注意事項",
-  "ebay_category": "推奨eBayカテゴリ（英語）",
-  "vero_risk": "VeROリスクの有無と対策",
-  "cpsc_note": "CPSC規制の有無",
-  "profit_summary": "利益計算サマリー（仕入れ・送料・手数料・関税・推奨価格・利益率の概算）"
-}`;
-
+  const prompt=`あなたはeBay輸出の専門家です。以下の商品のeBay出品フォーマットを作成してください。\n商品名：${name}\n仕入れ値：¥${cost}\nカテゴリ：${cat||'不明'}\n状態：${cond||'中古'}\n特記事項：${note||'なし'}\n推奨出品価格：$${price}\n発送方法：${ship}\n仕入れ先URL：${url||'なし'}\n\n以下のJSON形式のみで返してください（他テキスト不要）：\n{"title":"eBayタイトル（英語・80文字以内・厳守）","description":"eBay商品説明文（英語・詳細・絵文字使用可）","hts_code":"HTSコード","tariff_rate":関税率数値,"tariff_note":"関税注意事項","ebay_category":"推奨eBayカテゴリ（英語）","vero_risk":"VeROリスクと対策","cpsc_note":"CPSC規制の有無","profit_summary":"利益計算サマリー（概算）"}`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        messages:[{role:'user',content:prompt}]
-      })
+      headers:{'Content-Type':'application/json','x-api-key':apikey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-ipc':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})
     });
     const data=await res.json();
+    if(data.error)throw new Error(data.error.message);
     const text=data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const jsonMatch=text.match(/\{[\s\S]*\}/);
-    if(!jsonMatch)throw new Error('JSON取得失敗');
-    const info=JSON.parse(jsonMatch[0]);
-
+    const m=text.match(/\{[\s\S]*\}/);if(!m)throw new Error('JSON取得失敗');
+    const info=JSON.parse(m[0]);
     document.getElementById('title-box').textContent=info.title||'';
     document.getElementById('desc-box').textContent=info.description||'';
-    document.getElementById('hts-box').textContent=
-      `HTSコード：${info.hts_code||'不明'}\n関税率：${info.tariff_rate||0}%\n関税注意：${info.tariff_note||'なし'}\neBayカテゴリ：${info.ebay_category||'不明'}\nVeROリスク：${info.vero_risk||'なし'}\nCPSC規制：${info.cpsc_note||'なし'}`;
+    document.getElementById('hts-box').textContent=`HTSコード：${info.hts_code||'不明'}\n関税率：${info.tariff_rate||0}%\n関税注意：${info.tariff_note||'なし'}\neBayカテゴリ：${info.ebay_category||'不明'}\nVeROリスク：${info.vero_risk||'なし'}\nCPSC規制：${info.cpsc_note||'なし'}`;
     document.getElementById('profit-box').textContent=info.profit_summary||'';
-
     document.getElementById('gen-result').style.display='';
     status.style.display='none';
   }catch(e){
-    status.innerHTML=`<div style="color:var(--text-danger);font-size:13px;">エラー：${e.message}</div>`;
+    status.innerHTML=`<div style="color:var(--danger);font-size:13px;padding:8px 0">エラー：${e.message}</div>`;
   }
   btn.disabled=false;
 }
 
-function copyText(id){
-  const text=document.getElementById(id).textContent;
-  navigator.clipboard.writeText(text).then(()=>{
-    const btn=event.target;
-    btn.textContent='コピー完了！';
-    setTimeout(()=>btn.textContent='コピー',2000);
+function copyBox(id,btn){
+  navigator.clipboard.writeText(document.getElementById(id).textContent).then(()=>{
+    btn.textContent='コピー完了！';setTimeout(()=>btn.textContent='コピー',2000);
   });
 }
-
-calcShip();
-calculate();
 </script>
+</body>
+</html>
